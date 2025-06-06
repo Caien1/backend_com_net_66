@@ -1,9 +1,9 @@
 import express from 'express'
 import { UserValidationSignUp, UserValidationLogIn } from '../validation/auth_validation.js'
-
+import {} from "dotenv/config.js"
 import { prisma } from "../db/client.js"
 import bycrypt from "bcrypt"
-
+import jwt from "jsonwebtoken"
 export const router = express.Router()
 
 
@@ -63,14 +63,19 @@ router.post("/sign-in", async (req, res) => {
     }
 
     try{
-        const user = await prisma.user.findFirst({
+        const userExists = await prisma.user.findFirst({
             where: {email:body.email}
         })
         
-        const passwordCheck = await bycrypt.compare(body.password,user.password)
+        const passwordCheck = await bycrypt.compare(body.password,userExists.password)
         
         if(passwordCheck){
-            
+            const user = {name: userExists.username}
+        const accessToken= jwt.sign(user,process.env.ACCESS_JWT_TOKEN)
+        return res.json({accessToken:accessToken})
+        
+
+
         }
 
         return res.status(400).json({message:"Well check the password"})
